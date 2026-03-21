@@ -9,8 +9,16 @@ export class User extends Model {
     public declare password: string;
     public declare email_verified_at: string | Date | null;
 
-    protected fillable: string[] = ['name', 'email', 'password', 'email_verified_at'];
-    protected hidden: string[] = ['password'];
+    protected fillable: string[] = [
+        'name',
+        'email',
+        'password',
+        'email_verified_at',
+    ];
+
+    protected hidden: string[] = [
+        'password',
+    ];
 
     public hasVerifiedEmail(): boolean {
         return this.email_verified_at !== null;

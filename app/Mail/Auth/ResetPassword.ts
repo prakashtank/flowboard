@@ -10,7 +10,7 @@ export class ResetPassword extends Mailable {
 
     public build() {
         return this.subject('Reset Password Notification')
-            .view('emails.auth.reset', {
+            .view('emails/auth/reset_password', {
                 reset_url: this.resetUrl,
                 app_name: this.appName,
                 year: new Date().getFullYear()

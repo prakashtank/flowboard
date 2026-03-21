@@ -1,57 +1,145 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - {{ config('app.name', 'ArikaJS') }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="/assets/img/favicon.png">
-    <style>
-        :root { --primary: #8b5cf6; --bg: #f8fafc; --text: #0f172a; --text-muted: #64748b; }
-        body { font-family: 'Outfit', sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        nav { background: white; padding: 1.2rem 5%; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.01); }
-        .logo-container { display: flex; align-items: center; text-decoration: none; }
-        .logo { width: 120px; height: auto; transition: filter 0.3s; }
-        .logo:hover { filter: brightness(1.1); }
-        .logout-btn { color: #ef4444; background: none; border: 1px solid rgba(239, 68, 68, 0.1); padding: 0.6rem 1.2rem; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s ease; }
-        .logout-btn:hover { background: #fee2e2; }
-        main { padding: 4rem 5%; max-width: 1200px; margin: 0 auto; }
-        .welcome-card { background: white; padding: 4rem; border-radius: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02); text-align: center; position: relative; overflow: hidden; }
-        .welcome-card h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 800; }
-        .welcome-card p { font-size: 1.2rem; color: var(--text-muted); max-width: 600px; margin: 0 auto; line-height: 1.6; }
-        .aurora { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 60%); z-index: -1; animation: rotate 20s linear infinite; }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-    <nav>
-        <a href="/" class="logo-container">
-            <img src="/assets/img/logo.png" alt="ArikaJS Logo" class="logo">
-        </a>
-        <form action="/auth/logout" method="POST" style="margin: 0;">
-            @csrf
-            <button type="submit" class="logout-btn">Sign Out</button>
-        </form>
-    </nav>
-    <main>
-        <div class="welcome-card">
-            <div class="aurora"></div>
-            <h1>Hello, {{ user.name }}!</h1>
-            <p>Welcome to your premium application dashboard. You have successfully authenticated using the ArikaJS Next-Gen Authentication system.</p>
+@extends('layouts.app')
+
+@section('title')
+Dashboard — FlowBoard
+@endsection
+
+@section('content')
+<div class="dashboard-header" style="margin-bottom: 2.5rem;">
+    <h1 style="font-size: 2.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem;">
+        Welcome back, {{ user.name }}!
+    </h1>
+    <p style="color: var(--text-muted); font-size: 1.125rem;">Here is what's happening with your projects today.</p>
+</div>
+
+<!-- Stats Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+    <div class="card" style="padding: 1.5rem; border-left: 4px solid var(--primary);">
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Active Boards</p>
+        <h3 style="font-size: 2rem; font-weight: 800; color: var(--text-main);">{{ stats.boardCount }}</h3>
+    </div>
+    <div class="card" style="padding: 1.5rem; border-left: 4px solid #10b981;">
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Assigned Tasks</p>
+        <h3 style="font-size: 2rem; font-weight: 800; color: var(--text-main);">{{ stats.taskCount }}</h3>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+    <!-- Recent Boards -->
+    <section>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Recent Boards</h2>
+            <a href="/boards" style="font-size: 0.875rem; color: var(--primary); text-decoration: none;">View all boards &rarr;</a>
+        </div>
+        
+        <div class="boards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.5rem;">
+            @for(const board of recentBoards)
+            <a href="/boards/{{ board.id }}" class="card" style="text-decoration: none; border-top: 4px solid {{ board.color }}; padding: 1.5rem;">
+                <h3 style="font-size: 1.125rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ board.title }}</h3>
+                <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ board.description || 'No description' }}</p>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">Updated {{ date(new Date(board.updated_at), 'M j') }}</span>
+            </a>
+            @endfor
             
-            @if(!user.email_verified_at)
-            <div style="margin-top: 2.5rem; padding: 1.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; color: #b45309; text-align: left;">
-                <h3 style="margin-top: 0; margin-bottom: 0.5rem; font-size: 1.2rem;">Email Not Verified</h3>
-                <p style="margin-bottom: 1.5rem; color: #92400e; font-size: 0.95rem;">Please verify your email address to access all features. Didn't receive the email?</p>
-                <form action="/auth/verify/resend" method="POST" style="margin: 0;">
-                    @csrf
-                    <button type="submit" style="background: #f59e0b; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 10px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);">
-                        Resend Verification Link
-                    </button>
-                </form>
+            <button class="card" style="background: var(--bg-hover); border: 2px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; cursor: pointer; min-height: 160px;" onclick="openNewBoardModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span style="color: var(--text-muted); font-weight: 600;">Create Board</span>
+            </button>
+        </div>
+    </section>
+
+    <!-- Urgent Tasks / Tasks Assigned to me -->
+    <section>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">My Next Actions</h2>
+            <a href="/tasks" style="font-size: 0.875rem; color: var(--primary); text-decoration: none;">Full List &rarr;</a>
+        </div>
+        
+        <div class="card" style="padding: 1rem;">
+            @for(const task of upcomingTasks)
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onclick="window.location.href='/boards/{{ task.board_id }}'">
+                <p style="font-weight: 600; color: var(--text-main); font-size: 0.9375rem; margin-bottom: 0.25rem;">{{ task.title }}</p>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary);"></span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">{{ task.board_title }}</span>
+                </div>
+            </div>
+            @endfor
+            
+            @if(upcomingTasks.length === 0)
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+                No pending tasks found.
             </div>
             @endif
         </div>
-    </main>
-</body>
-</html>
+    </section>
+</div>
+
+<!-- Modal -->
+<div id="new-board-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 500px; padding: 2.5rem;">
+        <h2 style="margin-bottom: 1.5rem;">Create New Board</h2>
+        <form id="create-board-form">
+            <div class="form-group">
+                <label>Board Title</label>
+                <input type="text" name="title" required placeholder="Project Name" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <input type="text" name="description" placeholder="A brief overview..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); margin-top: 0.5rem;">
+            </div>
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label>Accent Color</label>
+                <input type="color" name="color" value="#6366f1" style="display: block; width: 100%; height: 40px; border: none; background: none; cursor: pointer;">
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                <button type="button" class="btn" style="background: var(--border); color: var(--text-main);" onclick="closeNewBoardModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submit-btn">Create Board</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+function openNewBoardModal() { document.getElementById('new-board-modal').style.display = 'flex'; }
+function closeNewBoardModal() { document.getElementById('new-board-modal').style.display = 'none'; }
+
+document.getElementById('create-board-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('submit-btn');
+    const originalText = submitBtn.innerText;
+    
+    submitBtn.innerText = 'Creating...';
+    submitBtn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    
+    try {
+        const response = await fetch('/api/boards', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const errData = await response.json();
+            alert('Error: ' + (errData.message || 'Something went wrong'));
+            submitBtn.innerText = originalText;
+            submitBtn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Network error occurred.');
+        submitBtn.innerText = originalText;
+        submitBtn.disabled = false;
+    }
+});
+</script>
+@endpush

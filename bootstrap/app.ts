@@ -17,9 +17,13 @@ const app = createApp(
 
 import { AppServiceProvider } from '@Providers/AppServiceProvider';
 import { RouteServiceProvider } from '@Providers/RouteServiceProvider';
+import { EventServiceProvider } from '@Providers/EventServiceProvider';
+import { AuthServiceProvider } from '@Providers/AuthServiceProvider';
 
 app.register(AppServiceProvider);
 app.register(RouteServiceProvider);
+app.register(EventServiceProvider);
+app.register(AuthServiceProvider);
 
 /*
 |--------------------------------------------------------------------------

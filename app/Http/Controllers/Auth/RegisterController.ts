@@ -1,38 +1,41 @@
-import { Request, Response, Mail, Hasher, config, Log, app, view } from 'arikajs';
+import { Request, Response, Log, lang, view, Hasher } from 'arikajs';
 import { User } from '@Models/User';
-import { VerifyEmail } from '@Mail/Auth/VerifyEmail';
 
 export class RegisterController {
+    /**
+     * Show the registration form.
+     */
     public async showRegister(req: Request, res: Response) {
-        return await view('auth.register', { error: null, success: null, old: {} });
+        return view('auth.register');
     }
 
+    /**
+     * Handle an incoming registration request.
+     */
     public async register(req: Request, res: Response) {
-        const { name, email, password } = await req.validate({
-            name: 'required|string|min:2',
-            email: 'required|email',
+        const data = await req.validate({
+            name: 'required|string|max:255',
+            email: 'required|string|email|max:255|unique:users',
             password: 'required|string|min:8|confirmed',
         });
 
-        const hashedPassword = await Hasher.make(password);
-        const user = await User.create({ name, email, password: hashedPassword });
+        const user = await User.create({
+            name: data.name,
+            email: data.email,
+            password: await Hasher.make(data.password),
+        });
 
-        const appName = config('app.name', 'ArikaJS App');
-        const appUrl = config('app.url', 'http://localhost:3000');
-        const verificationUrl = appUrl + '/auth/verify?email=' + encodeURIComponent(email) + '&token=' + Buffer.from(email).toString('base64');
+        Log.info('New user registered', { email: (user as any).email });
 
-        try {
-            await Mail.to(email).send(new VerifyEmail(name, verificationUrl, appName));
-        } catch (e) {
-            Log.error('Failed to send verification email', { error: (e as Error).message, email });
+        // Auto-login after registration for web
+        if (!req.expectsJson()) {
+            await req.auth.guard('web').login(user);
+            return res.redirect('/dashboard');
         }
 
-        await req.auth.login(user);
-
-        return await view('auth.register', { 
-            success: 'Registration successful! You are now logged in.',
-            user,
-            old: {}
+        return res.status(201).json({ 
+            message: lang('auth.register_success'),
+            user 
         });
     }
 }

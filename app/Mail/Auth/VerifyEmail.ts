@@ -11,7 +11,7 @@ export class VerifyEmail extends Mailable {
 
     public build() {
         return this.subject('Verify Your Email Address')
-            .view('emails.auth.verify', {
+            .view('emails/auth/verify_email', {
                 name: this.name,
                 verification_url: this.verificationUrl,
                 app_name: this.appName,

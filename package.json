@@ -9,14 +9,16 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "arikajs": "^0.10.2",
-    "tsconfig-paths": "^4.0.0"
+    "bcryptjs": "^3.0.3"
   },
   "devDependencies": {
     "@arikajs/cli": "^0.10.2",
-    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "tsconfig-paths": "^4.2.0",
     "tsx": "^4.0.0",
-    "@types/node": "^20.0.0"
+    "typescript": "^5.0.0"
   },
   "author": "Prakash Tank"
 }

@@ -1,14 +1,15 @@
-import { Request, Response, Mail, config, Log, lang, DB, view } from 'arikajs';
+import { Request, Response, Mail, config, Log, lang, DB } from 'arikajs';
 import { User } from '@Models/User';
 import { ResetPassword } from '@Mail/Auth/ResetPassword';
+import { VerifyEmail } from '@Mail/Auth/VerifyEmail';
 import * as crypto from 'crypto';
 
 export class ForgotPasswordController {
     /**
-     * Show the form to request a password reset link.
+     * Display the form to request a password reset link.
      */
-    public async showLinkRequestForm(req: Request, res: Response) {
-        return await view('auth.passwords.email', { error: null, success: null });
+    public showLinkRequestForm(req: Request, res: Response) {
+        return req.view.render('auth.passwords.email');
     }
 
     /**
@@ -16,26 +17,35 @@ export class ForgotPasswordController {
      */
     public async sendResetLinkEmail(req: Request, res: Response) {
         const { email } = await req.validate({
-            email: 'required|email'
+            email: 'required|email',
         });
-        
         const user = await User.where('email', email).first() as User | null;
 
         if (!user) {
-            return await view('auth.passwords.email', { 
-                error: lang('auth.user_not_found'), 
-                success: null 
-            });
+            return res.json({ error: lang('auth.user_not_found') }, 404);
         }
 
-        if (!user.email_verified_at) {
-            return await view('auth.passwords.email', { 
-                error: lang('auth.email_not_verified'), 
-                success: null 
-            });
+        const appName = config('app.name', 'ArikaJS App');
+        const appUrl = config('app.url', 'http://localhost:3000');
+
+        // Check if user is verified
+        if (user.hasVerifiedEmail && !user.hasVerifiedEmail()) {
+            const verificationUrl = `${appUrl}/api/auth/verify?email=${encodeURIComponent(email)}&token=${Buffer.from(email).toString('base64')}`;
+            
+            try {
+                // Send verification link instead
+                await Mail.to(email).send(new VerifyEmail(user.name, verificationUrl, appName));
+                return res.json({ 
+                    message: "Account unverified. A new verification link has been sent to your email." 
+                });
+            } catch (e) {
+                Log.error('Failed to send verification email', { error: (e as Error).message, email });
+            }
         }
 
+        // Proceed with Password Reset
         const token = crypto.randomBytes(32).toString('hex');
+
         await DB.table('password_resets').where('email', email).delete();
         await DB.table('password_resets').insert({
             email,
@@ -43,17 +53,14 @@ export class ForgotPasswordController {
             created_at: new Date()
         });
 
-        const appName = config('app.name', 'ArikaJS App');
-        const appUrl = config('app.url', 'http://localhost:3000');
-        const resetUrl = appUrl + '/auth/password/reset/' + token + '?email=' + encodeURIComponent(email);
+        const resetUrl = `${appUrl}/api/auth/password/reset?email=${encodeURIComponent(email)}&token=${token}`;
+
         try {
             await Mail.to(email).send(new ResetPassword(resetUrl, appName));
         } catch (e) {
             Log.error('Failed to send reset email', { error: (e as Error).message, email });
         }
         
-        return await view('auth.passwords.email', { 
-            success: lang('auth.reset_link_sent') 
-        });
+        return res.json({ message: lang('auth.reset_link_sent') });
     }
 }

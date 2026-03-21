@@ -1,7 +1,26 @@
 import { User } from '@Models/User';
 
 export default {
-    default: 'web',
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication Defaults
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the default authentication "guard" and password
+    | reset options for your application.
+    |
+    */
+    default: 'api',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication Guards
+    |--------------------------------------------------------------------------
+    |
+    | Next, you may define every authentication guard for your application.
+    | Supported Drivers: "session", "jwt", "token", "basic"
+    |
+    */
     guards: {
         web: {
             driver: 'session',
@@ -16,12 +35,29 @@ export default {
             },
         },
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Providers
+    |--------------------------------------------------------------------------
+    |
+    | All authentication drivers have a user provider. This defines how the
+    | users are actually retrieved out of your database.
+    |
+    */
     providers: {
         users: {
             driver: 'eloquent',
             model: User,
         },
     },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication Throttling & Locking
+    |--------------------------------------------------------------------------
+    |
+    */
     lockout: {
         maxAttempts: 5,
         decayMinutes: 15,

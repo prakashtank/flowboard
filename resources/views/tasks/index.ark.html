@@ -1,0 +1,54 @@
+@extends('layouts.app')
+
+@section('title')
+My Tasks — FlowBoard
+@endsection
+
+@section('content')
+<div class="dashboard-header" style="margin-bottom: 2.5rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--text-main);">My Tasks</h1>
+    <p style="color: var(--text-muted);">View all tasks assigned to you across all boards.</p>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="background: var(--bg-hover); border-bottom: 1px solid var(--border);">
+                <th style="padding: 1rem 1.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-main);">Task</th>
+                <th style="padding: 1rem 1.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-main);">Board</th>
+                <th style="padding: 1rem 1.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-main);">Status</th>
+                <th style="padding: 1rem 1.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-main);">Due Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for(const task of tasks)
+            <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onclick="window.location.href='/boards/{{ task.board_id }}'">
+                <td style="padding: 1rem 1.5rem;">
+                    <p style="font-weight: 600; color: var(--text-main); margin-bottom: 0.25rem;">{{ task.title }}</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">{{ task.description || 'No description' }}</p>
+                </td>
+                <td style="padding: 1rem 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                    {{ task.board_title || 'Workspace' }}
+                </td>
+                <td style="padding: 1rem 1.5rem;">
+                    <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: var(--border); color: var(--text-muted);">
+                        In List
+                    </span>
+                </td>
+                <td style="padding: 1rem 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                    {{ date(new Date(task.updated_at), 'M j, Y') }}
+                </td>
+            </tr>
+            @endfor
+            
+            @if(tasks.length === 0)
+            <tr>
+                <td colspan="4" style="padding: 4rem; text-align: center; color: var(--text-muted);">
+                    Great job! You have no tasks assigned to you right now. 🥳
+                </td>
+            </tr>
+            @endif
+        </tbody>
+    </table>
+</div>
+@endsection

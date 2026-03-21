@@ -1,0 +1,89 @@
+@extends('layouts.app')
+
+@section('title')
+My Boards — FlowBoard
+@endsection
+
+@section('content')
+<div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+    <div>
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--text-main);">My Boards</h1>
+        <p style="color: var(--text-muted);">Manage all your project workspaces.</p>
+    </div>
+    
+    <button class="btn btn-primary" onclick="openNewBoardModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline; vertical-align: middle; margin-right: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        New Board
+    </button>
+</div>
+
+<div class="boards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    @for(const board of boards)
+    <a href="/boards/{{ board.id }}" class="card" style="text-decoration: none; border-top: 5px solid {{ board.color }};">
+        <div style="margin-bottom: 1rem;">
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">{{ board.title }}</h3>
+            <p style="font-size: 0.875rem; color: var(--text-muted); line-height: 1.5;">{{ board.description || 'No description provided.' }}</p>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted);">
+            <span>Last updated {{ date(new Date(board.updated_at), 'M j, Y') }}</span>
+        </div>
+    </a>
+    @endfor
+</div>
+
+<!-- Modal Template -->
+<div id="new-board-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 500px; padding: 2.5rem;">
+        <h2 style="margin-bottom: 1.5rem;">Create New Board</h2>
+        <form id="create-board-form">
+            <div class="form-group">
+                <label>Board Title</label>
+                <input type="text" name="title" required placeholder="Project Name">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="description" placeholder="A brief overview...">
+            </div>
+            <div class="form-group">
+                <label>Accent Color</label>
+                <input type="color" name="color" value="#6366f1">
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                <button type="button" class="btn" onclick="closeNewBoardModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Board</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+function openNewBoardModal() { document.getElementById('new-board-modal').style.display = 'flex'; }
+function closeNewBoardModal() { document.getElementById('new-board-modal').style.display = 'none'; }
+
+document.getElementById('create-board-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target).entries());
+    try {
+        const response = await fetch('/api/boards', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) { 
+            window.location.reload(); 
+        } else {
+            const errData = await response.json();
+            alert('Failed to create board: ' + (errData.message || response.statusText));
+        }
+    } catch (err) { 
+        console.error(err);
+        alert('An error occurred while creating the board.');
+    }
+});
+</script>
+@endpush

@@ -1,0 +1,13 @@
+node_modules/
+.env
+database/*.sqlite
+storage/app/*
+!storage/app/.gitkeep
+storage/public/*
+!storage/public/.gitkeep
+*.log
+dist/
+build/
+.DS_Store
+
+ARIKA_FRAMEWORK_IMPROVEMENTS.md
