@@ -1,4 +1,4 @@
-import { FormRequest } from './FormRequest';
+import { FormRequest } from 'arikajs';
 
 export class CreateTaskRequest extends FormRequest {
     public rules(): Record<string, string> {
@@ -6,7 +6,7 @@ export class CreateTaskRequest extends FormRequest {
             title: 'required|min:3',
             board_list_id: 'required',
             description: 'string',
-            due_date: 'string', // ArikaJS validation doesn't have a 'date' rule yet
+            due_date: 'string', 
         };
     }
 
@@ -22,7 +22,7 @@ export class CreateTaskRequest extends FormRequest {
 export class UpdateTaskRequest extends FormRequest {
     public rules(): Record<string, string> {
         return {
-            title: 'min:3', // Removing 'required' from update makes it optional and only validated if present
+            title: 'min:3',
             description: 'string',
             position: 'number',
             board_list_id: 'string',

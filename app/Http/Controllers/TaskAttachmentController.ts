@@ -1,5 +1,4 @@
-import { Request, Response } from 'arikajs';
-import { Storage } from '@arikajs/storage';
+import { Request, Response, Storage } from 'arikajs';
 import { Task } from '@Models/Task';
 import { TaskAttachment } from '@Models/TaskAttachment';
 
@@ -9,30 +8,31 @@ export class TaskAttachmentController {
      * Upload an attachment for a task using the Storage system.
      */
     public async store(req: Request, res: Response): Promise<any> {
-        const task = await Task.find(req.param('id'));
+        const task = await Task.find(req.param('id')) as any;
         if (!task) {
             return res.status(404).json({ message: 'Task not found.' });
         }
 
-        const file = (req as any).file('attachment');
+        const file = req.file('attachment');
         if (!file) {
             return res.status(400).json({ message: 'No file uploaded.' });
         }
 
-        const fileName = file.originalName;
-        const storagePath = `attachments/task_${(task as any).id}_${Date.now()}_${fileName}`;
+        const fileName = file.getClientOriginalName();
+        // Unique name to avoid collisions
+        const uniqueName = `task_${task.id}_${Date.now()}_${fileName}`;
         
-        // --- USING ARIKAJS STORAGE SYSTEM ---
-        // Storage.disk('public').put(path, contents)
-        // Note: some drivers might accept a file path or buffer.
-        // Usually ArikaJS .put() accepts the buffer or string.
-        await Storage.disk('public').put(storagePath, file.buffer || file.stream);
+        // --- USING ARIKAJS STORAGE SYSTEM VIA UPLOADED FILE ---
+        const storagePath = await file.store('attachments', { 
+            disk: 'public', 
+            name: uniqueName 
+        });
 
         const attachment = await TaskAttachment.create({
-            task_id: (task as any).id,
+            task_id: task.id,
             name: fileName,
             path: storagePath,
-            size: file.size.toString()
+            size: '0' // Size could be fetched from disk if needed
         });
 
         return res.status(201).json({ data: attachment });

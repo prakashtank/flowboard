@@ -1,9 +1,10 @@
-import { Model } from 'arikajs';
+import { Model, withSoftDeletes, mix } from 'arikajs';
 import { User } from './User';
 import { BoardList } from './BoardList';
 
-export class Board extends Model {
+export class Board extends mix(Model).with(withSoftDeletes) {
     protected static table = 'boards';
+    public static deletedAtColumn = 'archived_at';
 
     /**
      * The attributes that are mass assignable.

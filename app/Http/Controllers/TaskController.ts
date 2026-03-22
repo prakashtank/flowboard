@@ -55,7 +55,7 @@ export class TaskController {
     /**
      * POST /api/lists/:listId/tasks
      */
-    public async store(req: Request, res: Response): Promise<any> {
+    public async store(req: CreateTaskRequest, res: Response): Promise<any> {
         const user = await req.auth.user();
         const listId = req.param('listId');
         const list = await BoardList.find(listId) as any;
@@ -64,27 +64,22 @@ export class TaskController {
         const board = await list.board().get();
         await Gate.forUser(user).authorize('addContent', board);
 
-        const request = new CreateTaskRequest(req);
-        try {
-            const data = await request.validate();
-            const count = await Task.where('board_list_id', '=', listId).count();
+        const data = req.validated();
+        const count = await Task.where('board_list_id', '=', listId).count();
 
-            const task = await Task.create({
-                ...data,
-                board_list_id: listId,
-                position: count,
-            });
+        const task = await Task.create({
+            ...data,
+            board_list_id: listId,
+            position: count,
+        });
 
-            return res.status(201).json({ data: task });
-        } catch (e: any) {
-            return res.status(e.status || 400).json({ errors: e.errors || e.message });
-        }
+        return res.status(201).json({ data: task });
     }
 
     /**
      * PUT /api/tasks/:id
      */
-    public async update(req: Request, res: Response): Promise<any> {
+    public async update(req: UpdateTaskRequest, res: Response): Promise<any> {
         const user = await req.auth.user();
         const task = await Task.find(req.param('id')) as any;
         if (!task) return res.status(404).json({ message: 'Task not found.' });
@@ -93,37 +88,32 @@ export class TaskController {
         const board = await list.board().get();
         await Gate.forUser(user).authorize('addContent', board);
 
-        const request = new UpdateTaskRequest(req);
-        try {
-            const validatedData = await request.validate();
-            
-            // Filter out undefined/null values before update to prevent DB constraint errors
-            const data: Record<string, any> = {};
-            for (const key in validatedData) {
-                if (validatedData[key] !== undefined && validatedData[key] !== null) {
-                    data[key] = validatedData[key];
-                }
+        const validatedData = req.validated();
+        
+        // Filter out undefined/null values before update to prevent DB constraint errors
+        const data: Record<string, any> = {};
+        for (const key in validatedData) {
+            if (validatedData[key] !== undefined && validatedData[key] !== null) {
+                data[key] = validatedData[key];
             }
-            
-            const oldListId = task.board_list_id;
-            
-            await task.update(data);
-
-            // --- EVENT: Task Completed ---
-            if (data.board_list_id !== undefined && data.board_list_id !== oldListId) {
-                const newList = await BoardList.find(data.board_list_id) as any;
-                const listTitle = newList?.title?.toLowerCase();
-                
-                if (['done', 'completed', 'finished'].includes(listTitle)) {
-                    const { TaskCompletedEvent } = require('../../Events/TaskCompletedEvent');
-                    Event.dispatch(new TaskCompletedEvent(task.title, user.email, board.title));
-                }
-            }
-
-            return res.json({ data: task });
-        } catch (e: any) {
-            return res.status(e.status || 400).json({ errors: e.errors || e.message });
         }
+        
+        const oldListId = task.board_list_id;
+        
+        await task.update(data);
+
+        // --- EVENT: Task Completed ---
+        if (data.board_list_id !== undefined && data.board_list_id !== oldListId) {
+            const newList = await BoardList.find(data.board_list_id) as any;
+            const listTitle = newList?.title?.toLowerCase();
+            
+            if (['done', 'completed', 'finished'].includes(listTitle)) {
+                const { TaskCompletedEvent } = require('../../Events/TaskCompletedEvent');
+                Event.dispatch(new TaskCompletedEvent(task.title, user.email, board.title));
+            }
+        }
+
+        return res.json({ data: task });
     }
 
     /**

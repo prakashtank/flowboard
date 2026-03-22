@@ -1,4 +1,4 @@
-import { Kernel as BaseKernel, StartSession, ViewMiddleware, BodyParserMiddleware } from 'arikajs';
+import { Kernel as BaseKernel, StartSession, ViewMiddleware, BodyParserMiddleware, ServeStaticMiddleware } from 'arikajs';
 import { Authenticate } from '@Middleware/Authenticate';
 import { RedirectIfAuthenticated } from '@Middleware/RedirectIfAuthenticated';
 import { EnsureEmailIsVerified } from '@Middleware/EnsureEmailIsVerified';
@@ -7,25 +7,19 @@ import { TrimStrings } from '@Middleware/TrimStrings';
 import { TrustProxies } from '@Middleware/TrustProxies';
 import { ShareRequest } from '@Middleware/ShareRequest';
 import { SecurityHeaders } from '@Middleware/SecurityHeaders';
-import { MultipartMiddleware } from '@Middleware/MultipartMiddleware';
 
 export class Kernel extends BaseKernel {
     constructor(app: any) {
         super(app);
 
         // Global middleware — runs on EVERY request (web + API).
-        this.middleware = this.middleware.filter(m => 
-            m.constructor.name !== 'SecurityHeaders' &&
-            m.constructor.name !== 'BodyParserMiddleware'
-        );
-        
-        this.middleware.push(
-            new MultipartMiddleware(),
-            new BodyParserMiddleware(), // Framework one still handles JSON/Encoded types
+        this.middleware = [
+            new ServeStaticMiddleware(),  // Serve public/ assets (CSS, JS, images) — MUST be first
+            new BodyParserMiddleware(), // Framework handles JSON, Form-data, and Multipart
             new SecurityHeaders(),
             new TrustProxies(),
             new TrimStrings(),
-        );
+        ];
 
         // Middleware groups — 'web' and 'api' groups.
         Object.assign(this.middlewareGroups, {
@@ -49,7 +43,7 @@ export class Kernel extends BaseKernel {
         });
 
         // Sync with router
-        const router = this.app.getRouter();
+        const router = (this as any).app.getRouter();
         router.setMiddlewareGroups(this.middlewareGroups);
         router.setRouteMiddleware(this.routeMiddleware);
     }

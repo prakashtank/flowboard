@@ -1,4 +1,4 @@
-import { FormRequest } from './FormRequest';
+import { FormRequest } from 'arikajs';
 
 export class BoardRequest extends FormRequest {
     public rules(): Record<string, string> {

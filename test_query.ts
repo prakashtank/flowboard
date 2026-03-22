@@ -1,10 +1,10 @@
 import { resolve } from 'path';
 import 'dotenv/config';
-import { Database } from '@arikajs/database';
+import { Database, DatabaseManager } from '@arikajs/database';
 import { Board } from './app/Models/Board';
 
 async function test() {
-    Database.init({
+    const manager = new DatabaseManager({
         default: process.env.DB_CONNECTION || 'mysql',
         connections: {
             mysql: {
@@ -17,6 +17,7 @@ async function test() {
             }
         }
     });
+    Database.setManager(manager);
 
     const user4Boards = await Board.where('user_id', '=', 4).get();
     console.log('Boards for User 4:', user4Boards);

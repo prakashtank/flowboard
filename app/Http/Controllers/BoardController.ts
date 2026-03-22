@@ -15,10 +15,8 @@ export class BoardController {
             return res.status(401).json({ message: 'Unauthenticated.' });
         }
         
-        // Only active boards by default
-        const boards = await Board.where('user_id', '=', (user as any).id)
-            .whereNull('archived_at')
-            .get();
+        // Only active boards by default (Soft deletes handled automatically)
+        const boards = await Board.where('user_id', '=', (user as any).id).get();
             
         return res.json({ data: boards });
     }
@@ -27,26 +25,20 @@ export class BoardController {
      * POST /api/boards
      * Create a new board.
      */
-    public async store(req: Request, res: Response): Promise<any> {
+    public async store(req: BoardRequest, res: Response): Promise<any> {
         const user = await req.auth.user();
         if (!user) {
             return res.status(401).json({ message: 'Unauthenticated.' });
         }
         
-        // --- STIRCT FORM REQUEST VALIDATION ---
-        const request = new BoardRequest(req);
-        try {
-            const data = await request.validate();
-            
-            const board = await Board.create({
-                ...data,
-                user_id: (user as any).id,
-            });
+        const data = req.validated();
+        
+        const board = await Board.create({
+            ...data,
+            user_id: (user as any).id,
+        });
 
-            return res.status(201).json({ data: board });
-        } catch (e: any) {
-            return res.status(e.status || 400).json({ errors: e.errors || e.message });
-        }
+        return res.status(201).json({ data: board });
     }
 
     /**
@@ -78,7 +70,7 @@ export class BoardController {
      * PUT /api/boards/:id
      * Update a board.
      */
-    public async update(req: Request, res: Response): Promise<any> {
+    public async update(req: BoardRequest, res: Response): Promise<any> {
         const user = await req.auth.user();
         const boardId = req.param('id');
         const board = await Board.find(boardId) as Board | null;
@@ -90,28 +82,22 @@ export class BoardController {
         // --- AUTHORIZATION POLICY ---
         await Gate.forUser(user).authorize('update', board);
 
-        // --- VALIDATION ---
-        const request = new BoardRequest(req);
-        try {
-            const validatedData = await request.validate();
-            
-            // Filter to only included fields to allow partial updates without collisions
-            const data: Record<string, any> = {};
-            for (const key in validatedData) {
-                if (validatedData[key] !== undefined && validatedData[key] !== null) {
-                    data[key] = validatedData[key];
-                }
+        const validatedData = req.validated();
+        
+        // Filter to only included fields to allow partial updates without collisions
+        const data: Record<string, any> = {};
+        for (const key in validatedData) {
+            if (validatedData[key] !== undefined && validatedData[key] !== null) {
+                data[key] = validatedData[key];
             }
-
-            await board.update(data);
-            
-            // Invalidate cache
-            await Cache.forget(`board:${boardId}:user:${(user as any).id}`);
-
-            return res.json({ data: board });
-        } catch (e: any) {
-            return res.status(e.status || 400).json({ errors: e.errors || e.message });
         }
+
+        await board.update(data);
+        
+        // Invalidate cache
+        await Cache.forget(`board:${boardId}:user:${(user as any).id}`);
+
+        return res.json({ data: board });
     }
 
     /**
@@ -128,7 +114,7 @@ export class BoardController {
 
         await Gate.forUser(user).authorize('update', board);
 
-        await board.update({ archived_at: new Date() });
+        await board.delete();
         await Cache.forget(`board:${(board as any).id}:user:${(user as any).id}`);
 
         return res.json({ message: 'Board archived successfully.' });
@@ -150,7 +136,7 @@ export class BoardController {
         // --- AUTHORIZATION POLICY ---
         await Gate.forUser(user).authorize('delete', board);
 
-        await board.delete();
+        await board.forceDelete();
 
         // Invalidate cache
         await Cache.forget(`board:${boardId}:user:${(user as any).id}`);

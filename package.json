@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "arikajs": "^0.10.2",
+    "arikajs": "workspace:*",
     "bcryptjs": "^3.0.3"
   },
   "devDependencies": {
-    "@arikajs/cli": "^0.10.2",
+    "@arikajs/cli": "workspace:*",
     "@types/node": "^20.0.0",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.0.0",

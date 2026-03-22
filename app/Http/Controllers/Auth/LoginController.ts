@@ -21,16 +21,16 @@ export class LoginController {
         // Determine guard based on request type
         const guardType = req.expectsJson() ? 'api' : 'web';
         const guard = req.auth.guard(guardType);
-        
+
         const result = await guard.attempt(credentials);
 
         if (!result) {
             Log.info('Failed login attempt', { email: credentials.email });
-            
+
             if (req.expectsJson()) {
                 return res.json({ error: lang('auth.failed') }, 401);
             }
-            
+
             await req.session.flash('errors', { email: [lang('auth.failed')] });
             await req.session.flash('_old_input', req.all());
             return res.back(req);
@@ -39,14 +39,14 @@ export class LoginController {
         const user = await guard.user();
 
         if (req.expectsJson()) {
-            const access_token = typeof result === 'object' && (result as any).access_token 
-                ? (result as any).access_token 
+            const access_token = typeof result === 'object' && (result as any).access_token
+                ? (result as any).access_token
                 : (typeof result === 'string' ? result : undefined);
 
-            return res.json({ 
+            return res.json({
                 message: lang('auth.login_success'),
                 access_token,
-                user 
+                user
             });
         }
 
@@ -74,7 +74,7 @@ export class LoginController {
         } catch (e) {
             Log.error('Logout error', { error: (e as Error).message });
         }
-        
+
         if (req.expectsJson()) {
             return res.json({ message: lang('auth.logout_success') });
         }

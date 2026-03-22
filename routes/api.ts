@@ -4,6 +4,8 @@ import { BoardController } from '@Http/Controllers/BoardController';
 import { BoardListController } from '@Http/Controllers/BoardListController';
 import { TaskController } from '@Http/Controllers/TaskController';
 import { TaskAttachmentController } from '@Http/Controllers/TaskAttachmentController';
+import { CreateTaskRequest, UpdateTaskRequest } from '../app/Http/Requests/TaskRequest';
+import { BoardRequest } from '../app/Http/Requests/BoardRequest';
 
 import { LoginController } from '@Controllers/Auth/LoginController';
 import { RegisterController } from '@Controllers/Auth/RegisterController';
@@ -64,9 +66,9 @@ Route.group({ middleware: ['auth:web,api'] }, () => {
 
     // ── Boards ────────────────────────────────────────────────────────────────
     Route.get('/boards',            [BoardController, 'index']);
-    Route.post('/boards',           [BoardController, 'store']);
+    Route.post('/boards',           [BoardController, 'store']).validateWith(BoardRequest);
     Route.get('/boards/:id',        [BoardController, 'show']);
-    Route.put('/boards/:id',        [BoardController, 'update']);
+    Route.put('/boards/:id',        [BoardController, 'update']).validateWith(BoardRequest);
     Route.post('/boards/:id/archive', [BoardController, 'archive']);
     Route.delete('/boards/:id',     [BoardController, 'destroy']);
 
@@ -79,8 +81,8 @@ Route.group({ middleware: ['auth:web,api'] }, () => {
     // ── Tasks ─────────────────────────────────────────────────────────────────
     Route.get('/tasks/:id',                 [TaskController, 'show']);
     Route.get('/lists/:listId/tasks',       [TaskController, 'index']);
-    Route.post('/lists/:listId/tasks',      [TaskController, 'store']);
-    Route.put('/tasks/:id',                 [TaskController, 'update']);
+    Route.post('/lists/:listId/tasks',      [TaskController, 'store']).validateWith(CreateTaskRequest);
+    Route.put('/tasks/:id',                 [TaskController, 'update']).validateWith(UpdateTaskRequest);
     Route.delete('/tasks/:id',              [TaskController, 'destroy']);
     
     // ── Task Attachments ──────────────────────────────────────────────────────────

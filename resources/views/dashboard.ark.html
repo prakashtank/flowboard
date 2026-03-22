@@ -130,13 +130,13 @@ document.getElementById('create-board-form').addEventListener('submit', async (e
             window.location.reload();
         } else {
             const errData = await response.json();
-            alert('Error: ' + (errData.message || 'Something went wrong'));
+            sweet.error('Error', errData.message || 'Something went wrong');
             submitBtn.innerText = originalText;
             submitBtn.disabled = false;
         }
     } catch (err) {
         console.error(err);
-        alert('Network error occurred.');
+        sweet.error('Network Error', 'A network error occurred.');
         submitBtn.innerText = originalText;
         submitBtn.disabled = false;
     }
