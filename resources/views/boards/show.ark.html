@@ -4,7 +4,7 @@
 {{ board.title }} — FlowBoard
 @endsection
 
-@push('styles')
+@section('content')
 <style>
     .kanban-container {
         display: flex;
@@ -96,9 +96,7 @@
         color: var(--primary);
     }
 </style>
-@endpush
 
-@section('content')
 <div class="board-header" style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
