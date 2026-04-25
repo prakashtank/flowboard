@@ -34,11 +34,11 @@ export class DashboardController {
         const boardCount = await Board.where('user_id', '=', userId).count();
         const taskCount = await DB.table('task_assignees').where('user_id', '=', userId).count();
 
-        return view('dashboard', { 
-            recentBoards, 
-            upcomingTasks, 
+        return view('dashboard', {
+            recentBoards,
+            upcomingTasks,
             stats: { boardCount, taskCount },
-            user 
+            user
         });
     }
 

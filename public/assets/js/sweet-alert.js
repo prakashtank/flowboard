@@ -1,145 +1,142 @@
-/**
- * Advanced Sweet Alert implementation for ArikaJS.
- * Features: Modals, Toasts, Stacking, Promises, Glassmorphism.
- */
-class Sweet {
-    static _instance;
-    _queue = [];
-    _activePopups = [];
-    _initialized = false;
-    constructor() {
-        if (typeof window !== 'undefined' && !this._initialized) {
-            this._injectStyles();
-            this._initialized = true;
+if (typeof window !== 'undefined' && !window.sweet) {
+    class Sweet {
+        static _instance;
+        _queue = [];
+        _activePopups = [];
+        _initialized = false;
+        constructor() {
+            if (typeof window !== 'undefined' && !this._initialized) {
+                this._injectStyles();
+                this._initialized = true;
+            }
         }
-    }
-    /**
-     * Singleton instance.
-     */
-    static getInstance() {
-        if (!Sweet._instance) {
-            Sweet._instance = new Sweet();
+        /**
+         * Singleton instance.
+         */
+        static getInstance() {
+            if (!Sweet._instance) {
+                Sweet._instance = new Sweet();
+            }
+            return Sweet._instance;
         }
-        return Sweet._instance;
-    }
-    /**
-     * Fire a new alert.
-     */
-    async fire(titleOrOptions, text, icon) {
-        let options = {};
-        if (typeof titleOrOptions === 'string') {
-            options = { title: titleOrOptions, text, icon };
+        /**
+         * Fire a new alert.
+         */
+        async fire(titleOrOptions, text, icon) {
+            let options = {};
+            if (typeof titleOrOptions === 'string') {
+                options = { title: titleOrOptions, text, icon };
+            }
+            else {
+                options = titleOrOptions;
+            }
+            return this._show(options);
         }
-        else {
-            options = titleOrOptions;
+        /** Shortcuts */
+        success(title, text) { return this.fire(title, text, 'success'); }
+        error(title, text) { return this.fire(title, text, 'error'); }
+        warning(title, text) { return this.fire(title, text, 'warning'); }
+        info(title, text) { return this.fire(title, text, 'info'); }
+        question(title, text) { return this.fire(title, text, 'question'); }
+        /**
+         * Confirmation dialog.
+         */
+        async confirm(title, text, confirmText = 'Confirm', cancelText = 'Cancel') {
+            const result = await this.fire({
+                title,
+                text,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText
+            });
+            return result.isConfirmed;
         }
-        return this._show(options);
-    }
-    /** Shortcuts */
-    success(title, text) { return this.fire(title, text, 'success'); }
-    error(title, text) { return this.fire(title, text, 'error'); }
-    warning(title, text) { return this.fire(title, text, 'warning'); }
-    info(title, text) { return this.fire(title, text, 'info'); }
-    question(title, text) { return this.fire(title, text, 'question'); }
-    /**
-     * Confirmation dialog.
-     */
-    async confirm(title, text, confirmText = 'Confirm', cancelText = 'Cancel') {
-        const result = await this.fire({
-            title,
-            text,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: confirmText,
-            cancelButtonText: cancelText
-        });
-        return result.isConfirmed;
-    }
-    /**
-     * Show a toast notification.
-     */
-    toast(title, icon = 'info', timer = 3000) {
-        return this.fire({
-            title,
-            icon,
-            toast: true,
-            position: 'top-end',
-            timer,
-            showConfirmButton: false,
-            timerProgressBar: true
-        });
-    }
-    /**
-     * ADVANCED: Handle a Promise with loading/success/error states.
-     */
-    async promise(promise, messages) {
-        const loadingPopup = await this.fire({
-            title: messages.loading,
-            icon: 'loading',
-            showConfirmButton: false,
-            allowOutsideClick: false
-        });
-        try {
-            const result = await promise;
-            const successMsg = typeof messages.success === 'function' ? messages.success(result) : messages.success;
-            // Close loading and show success
-            this.close();
-            this.fire(successMsg, undefined, 'success');
-            return result;
+        /**
+         * Show a toast notification.
+         */
+        toast(title, icon = 'info', timer = 3000) {
+            return this.fire({
+                title,
+                icon,
+                toast: true,
+                position: 'top-end',
+                timer,
+                showConfirmButton: false,
+                timerProgressBar: true
+            });
         }
-        catch (err) {
-            const errorMsg = typeof messages.error === 'function' ? messages.error(err) : messages.error;
-            // Close loading and show error
-            this.close();
-            this.fire(errorMsg, undefined, 'error');
-            throw err;
+        /**
+         * ADVANCED: Handle a Promise with loading/success/error states.
+         */
+        async promise(promise, messages) {
+            const loadingPopup = await this.fire({
+                title: messages.loading,
+                icon: 'loading',
+                showConfirmButton: false,
+                allowOutsideClick: false
+            });
+            try {
+                const result = await promise;
+                const successMsg = typeof messages.success === 'function' ? messages.success(result) : messages.success;
+                // Close loading and show success
+                this.close();
+                this.fire(successMsg, undefined, 'success');
+                return result;
+            }
+            catch (err) {
+                const errorMsg = typeof messages.error === 'function' ? messages.error(err) : messages.error;
+                // Close loading and show error
+                this.close();
+                this.fire(errorMsg, undefined, 'error');
+                throw err;
+            }
         }
-    }
-    /**
-     * Close the most recent popup.
-     */
-    close() {
-        const popup = this._activePopups.pop();
-        if (popup) {
-            popup.classList.add('arika-sweet-hide');
-            setTimeout(() => {
-                popup.remove();
-                if (this._activePopups.length === 0) {
-                    const container = document.querySelector('.arika-sweet-container');
-                    if (container)
-                        container.remove();
+        /**
+         * Close the most recent popup.
+         */
+        close() {
+            const popup = this._activePopups.pop();
+            if (popup) {
+                popup.classList.add('arika-sweet-hide');
+                setTimeout(() => {
+                    popup.remove();
+                    if (this._activePopups.length === 0) {
+                        const container = document.querySelector('.arika-sweet-container');
+                        if (container)
+                            container.remove();
+                    }
+                }, 200);
+            }
+        }
+        /**
+         * Internal: Render and show the popup.
+         */
+        _show(options) {
+            return new Promise((resolve) => {
+                const container = this._getOrCreateContainer(options);
+                const popup = document.createElement('div');
+                popup.className = `arika-sweet-popup ${options.toast ? 'arika-sweet-toast' : ''} arika-sweet-show`;
+                if (options.icon)
+                    popup.classList.add(`arika-sweet-icon-${options.icon}`);
+                // Apply glassmorphism and custom styles
+                if (options.background)
+                    popup.style.background = options.background;
+                if (options.width)
+                    popup.style.width = options.width;
+                if (options.padding)
+                    popup.style.padding = options.padding;
+                const iconHtml = this._getIconHtml(options.icon);
+                const titleHtml = options.title ? `<h2 class="arika-sweet-title">${options.title}</h2>` : '';
+                const textHtml = options.text ? `<div class="arika-sweet-text">${options.text}</div>` : '';
+                let buttonsHtml = '';
+                if (options.showConfirmButton !== false) {
+                    buttonsHtml += `<button class="arika-sweet-btn arika-sweet-confirm">${options.confirmButtonText || 'OK'}</button>`;
                 }
-            }, 200);
-        }
-    }
-    /**
-     * Internal: Render and show the popup.
-     */
-    _show(options) {
-        return new Promise((resolve) => {
-            const container = this._getOrCreateContainer(options);
-            const popup = document.createElement('div');
-            popup.className = `arika-sweet-popup ${options.toast ? 'arika-sweet-toast' : ''} arika-sweet-show`;
-            if (options.icon)
-                popup.classList.add(`arika-sweet-icon-${options.icon}`);
-            // Apply glassmorphism and custom styles
-            if (options.background)
-                popup.style.background = options.background;
-            if (options.width)
-                popup.style.width = options.width;
-            if (options.padding)
-                popup.style.padding = options.padding;
-            const iconHtml = this._getIconHtml(options.icon);
-            const titleHtml = options.title ? `<h2 class="arika-sweet-title">${options.title}</h2>` : '';
-            const textHtml = options.text ? `<div class="arika-sweet-text">${options.text}</div>` : '';
-            let buttonsHtml = '';
-            if (options.showConfirmButton !== false) {
-                buttonsHtml += `<button class="arika-sweet-btn arika-sweet-confirm">${options.confirmButtonText || 'OK'}</button>`;
-            }
-            if (options.showCancelButton) {
-                buttonsHtml += `<button class="arika-sweet-btn arika-sweet-cancel">${options.cancelButtonText || 'Cancel'}</button>`;
-            }
-            popup.innerHTML = `
+                if (options.showCancelButton) {
+                    buttonsHtml += `<button class="arika-sweet-btn arika-sweet-cancel">${options.cancelButtonText || 'Cancel'}</button>`;
+                }
+                popup.innerHTML = `
                 <div class="arika-sweet-content">
                     ${iconHtml}
                     <div class="arika-sweet-header">
@@ -150,90 +147,90 @@ class Sweet {
                 ${buttonsHtml ? `<div class="arika-sweet-actions">${buttonsHtml}</div>` : ''}
                 ${options.timerProgressBar ? `<div class="arika-sweet-timer-progress"></div>` : ''}
             `;
-            container.appendChild(popup);
-            this._activePopups.push(popup);
-            // Event Handlers
-            const confirmBtn = popup.querySelector('.arika-sweet-confirm');
-            const cancelBtn = popup.querySelector('.arika-sweet-cancel');
-            if (confirmBtn) {
-                confirmBtn.addEventListener('click', () => {
-                    this.close();
-                    resolve({ isConfirmed: true, isDenied: false, isDismissed: false });
-                });
-            }
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', () => {
-                    this.close();
-                    resolve({ isConfirmed: false, isDenied: false, isDismissed: true, dismiss: 'cancel' });
-                });
-            }
-            // Outside click handler
-            if (options.allowOutsideClick !== false && !options.toast) {
-                container.addEventListener('click', (e) => {
-                    if (e.target === container) {
+                container.appendChild(popup);
+                this._activePopups.push(popup);
+                // Event Handlers
+                const confirmBtn = popup.querySelector('.arika-sweet-confirm');
+                const cancelBtn = popup.querySelector('.arika-sweet-cancel');
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', () => {
                         this.close();
-                        resolve({ isConfirmed: false, isDenied: false, isDismissed: true, dismiss: 'backdrop' });
-                    }
-                });
-            }
-            // Timer handler
-            if (options.timer) {
-                if (options.timerProgressBar) {
-                    const progressBar = popup.querySelector('.arika-sweet-timer-progress');
-                    if (progressBar) {
-                        progressBar.style.transition = `width ${options.timer}ms linear`;
-                        setTimeout(() => progressBar.style.width = '0%', 10);
-                    }
+                        resolve({ isConfirmed: true, isDenied: false, isDismissed: false });
+                    });
                 }
-                setTimeout(() => {
-                    this.close();
-                    resolve({ isConfirmed: false, isDenied: false, isDismissed: true, dismiss: 'timer' });
-                }, options.timer);
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        this.close();
+                        resolve({ isConfirmed: false, isDenied: false, isDismissed: true, dismiss: 'cancel' });
+                    });
+                }
+                // Outside click handler
+                if (options.allowOutsideClick !== false && !options.toast) {
+                    container.addEventListener('click', (e) => {
+                        if (e.target === container) {
+                            this.close();
+                            resolve({ isConfirmed: false, isDenied: false, isDismissed: true, dismiss: 'backdrop' });
+                        }
+                    });
+                }
+                // Timer handler
+                if (options.timer) {
+                    if (options.timerProgressBar) {
+                        const progressBar = popup.querySelector('.arika-sweet-timer-progress');
+                        if (progressBar) {
+                            progressBar.style.transition = `width ${options.timer}ms linear`;
+                            setTimeout(() => progressBar.style.width = '0%', 10);
+                        }
+                    }
+                    setTimeout(() => {
+                        this.close();
+                        resolve({ isConfirmed: false, isDenied: false, isDismissed: true, dismiss: 'timer' });
+                    }, options.timer);
+                }
+            });
+        }
+        _getOrCreateContainer(options) {
+            let container = document.querySelector('.arika-sweet-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = `arika-sweet-container arika-sweet-position-${options.position || 'center'}`;
+                if (options.backdrop !== false && !options.toast) {
+                    container.style.background = typeof options.backdrop === 'string' ? options.backdrop : 'rgba(0, 0, 0, 0.4)';
+                    container.style.backdropFilter = 'blur(4px)';
+                }
+                document.body.appendChild(container);
             }
-        });
-    }
-    _getOrCreateContainer(options) {
-        let container = document.querySelector('.arika-sweet-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = `arika-sweet-container arika-sweet-position-${options.position || 'center'}`;
-            if (options.backdrop !== false && !options.toast) {
-                container.style.background = typeof options.backdrop === 'string' ? options.backdrop : 'rgba(0, 0, 0, 0.4)';
-                container.style.backdropFilter = 'blur(4px)';
+            return container;
+        }
+        _getIconHtml(icon) {
+            if (!icon)
+                return '';
+            if (icon === 'loading') {
+                return `<div class="arika-sweet-icon-wrapper"><div class="arika-sweet-loader"></div></div>`;
             }
-            document.body.appendChild(container);
+            let svg = '';
+            switch (icon) {
+                case 'success':
+                    svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+                    break;
+                case 'error':
+                    svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+                    break;
+                case 'info':
+                    svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+                    break;
+                case 'warning':
+                    svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+                    break;
+                case 'question':
+                    svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+                    break;
+            }
+            return `<div class="arika-sweet-icon-wrapper">${svg}</div>`;
         }
-        return container;
-    }
-    _getIconHtml(icon) {
-        if (!icon)
-            return '';
-        if (icon === 'loading') {
-            return `<div class="arika-sweet-icon-wrapper"><div class="arika-sweet-loader"></div></div>`;
-        }
-        let svg = '';
-        switch (icon) {
-            case 'success':
-                svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
-                break;
-            case 'error':
-                svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
-                break;
-            case 'info':
-                svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
-                break;
-            case 'warning':
-                svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
-                break;
-            case 'question':
-                svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
-                break;
-        }
-        return `<div class="arika-sweet-icon-wrapper">${svg}</div>`;
-    }
-    _injectStyles() {
-        const style = document.createElement('style');
-        style.innerHTML = `
+        _injectStyles() {
+            const style = document.createElement('style');
+            style.innerHTML = `
             .arika-sweet-container {
                 position: fixed;
                 inset: 0;
@@ -308,7 +305,6 @@ class Sweet {
             .arika-sweet-confirm:hover { background: #4f46e5; transform: translateY(-1px); }
             .arika-sweet-cancel { background: #f1f5f9; color: #475569; }
             .arika-sweet-cancel:hover { background: #e2e8f0; }
-
             .arika-sweet-loader {
                 width: 32px;
                 height: 32px;
@@ -318,7 +314,6 @@ class Sweet {
                 animation: arika-spin 0.8s linear infinite;
             }
             @keyframes arika-spin { to { transform: rotate(360deg); } }
-
             .arika-sweet-timer-progress {
                 position: absolute;
                 bottom: 0;
@@ -330,12 +325,12 @@ class Sweet {
                 border-bottom-right-radius: 1.25rem;
             }
         `;
-        document.head.appendChild(style);
+            document.head.appendChild(style);
+        }
     }
-}
-const sweet = Sweet.getInstance();
-// Expose to window for traditional script usage
-if (typeof window !== 'undefined') {
+    const sweet = Sweet.getInstance();
+    // Expose to window for traditional script usage
     window.sweet = sweet;
+    window.Sweet = Sweet;
 }
 //# sourceMappingURL=Sweet.js.map

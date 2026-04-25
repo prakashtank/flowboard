@@ -56,6 +56,8 @@ Route.get('/user', [LoginController, 'me']).withMiddleware('auth:api');
 
 // ─── Authenticated Routes ─────────────────────────────────────────────────────
 
+Route.get('/boards', [BoardController, 'index']);
+
 Route.group({ middleware: ['auth:web,api'] }, () => {
 
     // Me
@@ -65,31 +67,31 @@ Route.group({ middleware: ['auth:web,api'] }, () => {
     Route.get('/users', [UserController, 'index']);
 
     // ── Boards ────────────────────────────────────────────────────────────────
-    Route.get('/boards',            [BoardController, 'index']);
-    Route.post('/boards',           [BoardController, 'store']).validateWith(BoardRequest);
-    Route.get('/boards/:id',        [BoardController, 'show']);
-    Route.put('/boards/:id',        [BoardController, 'update']).validateWith(BoardRequest);
+    Route.get('/boards', [BoardController, 'index']);
+    Route.post('/boards', [BoardController, 'store']).validateWith(BoardRequest);
+    Route.get('/boards/:id', [BoardController, 'show']);
+    Route.put('/boards/:id', [BoardController, 'update']).validateWith(BoardRequest);
     Route.post('/boards/:id/archive', [BoardController, 'archive']);
-    Route.delete('/boards/:id',     [BoardController, 'destroy']);
+    Route.delete('/boards/:id', [BoardController, 'destroy']);
 
     // ── Lists (nested under boards) ───────────────────────────────────────────
-    Route.get('/boards/:id/lists',         [BoardListController, 'index']);
-    Route.post('/boards/:id/lists',        [BoardListController, 'store']);
-    Route.put('/boards/:id/lists/:listId',     [BoardListController, 'update']);
-    Route.delete('/boards/:id/lists/:listId',  [BoardListController, 'destroy']);
+    Route.get('/boards/:id/lists', [BoardListController, 'index']);
+    Route.post('/boards/:id/lists', [BoardListController, 'store']);
+    Route.put('/boards/:id/lists/:listId', [BoardListController, 'update']);
+    Route.delete('/boards/:id/lists/:listId', [BoardListController, 'destroy']);
 
     // ── Tasks ─────────────────────────────────────────────────────────────────
-    Route.get('/tasks/:id',                 [TaskController, 'show']);
-    Route.get('/lists/:listId/tasks',       [TaskController, 'index']);
-    Route.post('/lists/:listId/tasks',      [TaskController, 'store']).validateWith(CreateTaskRequest);
-    Route.put('/tasks/:id',                 [TaskController, 'update']).validateWith(UpdateTaskRequest);
-    Route.delete('/tasks/:id',              [TaskController, 'destroy']);
-    
+    Route.get('/tasks/:id', [TaskController, 'show']);
+    Route.get('/lists/:listId/tasks', [TaskController, 'index']);
+    Route.post('/lists/:listId/tasks', [TaskController, 'store']).validateWith(CreateTaskRequest);
+    Route.put('/tasks/:id', [TaskController, 'update']).validateWith(UpdateTaskRequest);
+    Route.delete('/tasks/:id', [TaskController, 'destroy']);
+
     // ── Task Attachments ──────────────────────────────────────────────────────────
-    Route.post('/tasks/:id/attachments',    [TaskAttachmentController, 'store']);
-    Route.delete('/attachments/:id',        [TaskAttachmentController, 'destroy']);
+    Route.post('/tasks/:id/attachments', [TaskAttachmentController, 'store']);
+    Route.delete('/attachments/:id', [TaskAttachmentController, 'destroy']);
 
     // ── Task Assignees ────────────────────────────────────────────────────────
-    Route.post('/tasks/:id/assign',                [TaskController, 'assign']);
-    Route.delete('/tasks/:id/assign/:userId',      [TaskController, 'unassign']);
+    Route.post('/tasks/:id/assign', [TaskController, 'assign']);
+    Route.delete('/tasks/:id/assign/:userId', [TaskController, 'unassign']);
 });

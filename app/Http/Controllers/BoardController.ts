@@ -14,10 +14,10 @@ export class BoardController {
         if (!user) {
             return res.status(401).json({ message: 'Unauthenticated.' });
         }
-        
+
         // Only active boards by default (Soft deletes handled automatically)
         const boards = await Board.where('user_id', '=', (user as any).id).get();
-            
+
         return res.json({ data: boards });
     }
 
@@ -30,9 +30,9 @@ export class BoardController {
         if (!user) {
             return res.status(401).json({ message: 'Unauthenticated.' });
         }
-        
+
         const data = req.validated();
-        
+
         const board = await Board.create({
             ...data,
             user_id: (user as any).id,
@@ -83,7 +83,7 @@ export class BoardController {
         await Gate.forUser(user).authorize('update', board);
 
         const validatedData = req.validated();
-        
+
         // Filter to only included fields to allow partial updates without collisions
         const data: Record<string, any> = {};
         for (const key in validatedData) {
@@ -93,7 +93,7 @@ export class BoardController {
         }
 
         await board.update(data);
-        
+
         // Invalidate cache
         await Cache.forget(`board:${boardId}:user:${(user as any).id}`);
 
